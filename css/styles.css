@@ -1,0 +1,327 @@
+:root {
+    /* Color Palette */
+    --bg-dark: #0f1115;
+    --card-bg: #1a1d24;
+    --card-border: #2a2e39;
+    
+    --text-main: #f0f2f5;
+    --text-muted: #9ba1a6;
+    
+    --accent-good: #10b981; /* Emerald Green */
+    --accent-poor: #ef4444; /* Red */
+    --accent-warning: #f59e0b; /* Amber */
+    
+    --accent-temp: #f97316; /* Orange */
+    --accent-hum: #3b82f6; /* Blue */
+    --accent-brand: #6366f1; /* Indigo */
+
+    --font-main: 'Inter', sans-serif;
+    --transition: all 0.3s ease;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-main);
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+}
+
+.app-container {
+    width: 100%;
+    max-width: 1200px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Typography */
+h1 { font-size: 1.8rem; font-weight: 700; color: var(--text-main); }
+h2 { font-size: 1.2rem; font-weight: 600; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem; }
+p { color: var(--text-muted); }
+
+/* Header */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.header-titles p {
+    font-size: 0.9rem;
+    margin-top: 0.3rem;
+}
+
+.header-status {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.4rem;
+}
+
+.badge {
+    background: var(--accent-brand);
+    color: white;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.connection-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.status-dot.connected { background-color: var(--accent-good); box-shadow: 0 0 8px var(--accent-good); }
+.status-dot.disconnected { background-color: var(--accent-poor); box-shadow: 0 0 8px var(--accent-poor); }
+
+.last-updated {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* Grid Layout */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 1.5rem;
+}
+
+.card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    transition: var(--transition);
+}
+
+.card:hover {
+    border-color: #3b4252;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+}
+
+.card-header {
+    margin-bottom: 1.5rem;
+}
+
+/* Card Placements */
+.air-quality-card { grid-column: span 8; }
+.env-cards-column { grid-column: span 4; display: flex; flex-direction: column; gap: 1.5rem; }
+.chart-card { grid-column: span 8; }
+.qr-card { grid-column: span 4; }
+
+/* Air Quality Gauge */
+.air-quality-card .card-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1;
+}
+
+.gauge-container {
+    position: relative;
+    width: 250px;
+    height: 125px;
+    margin-bottom: 1rem;
+}
+
+.gauge {
+    width: 100%;
+    height: 100%;
+}
+
+.gauge-background {
+    stroke: var(--card-border);
+    stroke-width: 8;
+    stroke-linecap: round;
+}
+
+.gauge-fill {
+    stroke: var(--accent-good);
+    stroke-width: 8;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.8s ease-out, stroke 0.5s ease;
+}
+
+.gauge-value {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+.sensor-label {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+}
+
+.status-badge {
+    padding: 0.5rem 1.5rem;
+    border-radius: 20px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--accent-good);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.status-badge.poor {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--accent-poor);
+    border-color: rgba(239, 68, 68, 0.2);
+}
+
+.error-text {
+    color: var(--accent-poor);
+    font-weight: 600;
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+}
+
+/* Environment Cards */
+.env-card {
+    flex-grow: 1;
+}
+.env-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+.env-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+.temp-card .env-value { color: var(--accent-temp); }
+.hum-card .env-value { color: var(--accent-hum); }
+
+.unit {
+    font-size: 1.2rem;
+    color: var(--text-muted);
+    margin-left: 0.2rem;
+}
+
+/* Chart */
+.chart-container {
+    position: relative;
+    height: 250px;
+    width: 100%;
+}
+
+/* QR Card */
+.qr-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.qr-instruction {
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.qr-wrapper {
+    background: white;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.url-display {
+    font-family: monospace;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+    word-break: break-all;
+    background: #111;
+    padding: 0.5rem;
+    border-radius: 4px;
+    width: 100%;
+}
+
+.btn {
+    background-color: var(--card-border);
+    color: var(--text-main);
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: var(--font-main);
+    font-weight: 500;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn:hover {
+    background-color: #3b4252;
+}
+
+/* Footer */
+.footer {
+    text-align: center;
+    padding-top: 1rem;
+    border-top: 1px solid var(--card-border);
+    margin-top: auto;
+    font-size: 0.85rem;
+}
+
+/* Responsive Design */
+@media (max-width: 900px) {
+    .air-quality-card, .chart-card { grid-column: span 12; }
+    .env-cards-column, .qr-card { grid-column: span 12; }
+    
+    .env-cards-column {
+        flex-direction: row;
+    }
+}
+
+@media (max-width: 600px) {
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    .header-status {
+        align-items: flex-start;
+    }
+    .env-cards-column {
+        flex-direction: column;
+    }
+}

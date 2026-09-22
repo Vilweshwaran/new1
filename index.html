@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Air Quality Monitor</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-titles">
+                <h1>Smart Air Quality Monitor</h1>
+                <p>ESP8266 IoT Environmental Monitoring System</p>
+            </div>
+            <div class="header-status">
+                <div id="demo-mode-badge" class="badge hidden">DEMO MODE</div>
+                <div class="connection-status">
+                    <span id="connection-indicator" class="status-dot disconnected"></span>
+                    <span id="connection-text">ESP8266: DISCONNECTED</span>
+                </div>
+                <div class="last-updated" id="last-updated">Last Updated: --</div>
+            </div>
+        </header>
+
+        <!-- Main Dashboard Content -->
+        <main class="dashboard-grid">
+            
+            <!-- Air Quality Card (Large) -->
+            <section class="card air-quality-card">
+                <div class="card-header">
+                    <h2><i class="fa-solid fa-wind"></i> Air Quality</h2>
+                </div>
+                <div class="card-body">
+                    <div class="gauge-container">
+                        <!-- Custom SVG Gauge -->
+                        <svg viewBox="0 0 100 50" class="gauge">
+                            <path class="gauge-background" d="M 10 50 A 40 40 0 0 1 90 50" fill="none" />
+                            <path id="gauge-fill" class="gauge-fill" d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke-dasharray="125.6" stroke-dashoffset="125.6" />
+                        </svg>
+                        <div class="gauge-value" id="mq135-value">--</div>
+                    </div>
+                    <div class="sensor-label">Raw Sensor Value (0-1023)</div>
+                    <div class="status-badge" id="air-status-badge">
+                        Status: <strong id="air-status-text">--</strong>
+                    </div>
+                    <div id="air-error-msg" class="error-text hidden">Sensor Error</div>
+                </div>
+            </section>
+
+            <!-- Temperature & Humidity Column -->
+            <div class="env-cards-column">
+                <!-- Temperature Card -->
+                <section class="card env-card temp-card">
+                    <div class="card-header">
+                        <h2><i class="fa-solid fa-temperature-half"></i> Temperature</h2>
+                    </div>
+                    <div class="card-body env-body">
+                        <div class="env-value">
+                            <span id="temp-value">--</span>
+                            <span class="unit">°C</span>
+                        </div>
+                        <div id="temp-error-msg" class="error-text hidden">Sensor Error</div>
+                    </div>
+                </section>
+
+                <!-- Humidity Card -->
+                <section class="card env-card hum-card">
+                    <div class="card-header">
+                        <h2><i class="fa-solid fa-droplet"></i> Humidity</h2>
+                    </div>
+                    <div class="card-body env-body">
+                        <div class="env-value">
+                            <span id="hum-value">--</span>
+                            <span class="unit">%</span>
+                        </div>
+                        <div id="hum-error-msg" class="error-text hidden">Sensor Error</div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- History Chart Card -->
+            <section class="card chart-card">
+                <div class="card-header">
+                    <h2><i class="fa-solid fa-chart-line"></i> Temperature & Humidity History</h2>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="historyChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- QR Code Card -->
+            <section class="card qr-card">
+                <div class="card-header">
+                    <h2><i class="fa-solid fa-qrcode"></i> Access Dashboard</h2>
+                </div>
+                <div class="card-body qr-body">
+                    <p class="qr-instruction">Scan to access this dashboard on mobile</p>
+                    <div id="qrcode" class="qr-wrapper"></div>
+                    <div class="url-display" id="qr-url-display">http://...</div>
+                    <button id="copy-url-btn" class="btn"><i class="fa-regular fa-copy"></i> Copy URL</button>
+                </div>
+            </section>
+
+        </main>
+
+        <footer class="footer">
+            <p>Smart Air Quality Monitoring System &bull; ESP8266 + MQ135 + DHT11</p>
+        </footer>
+    </div>
+
+    <!-- External Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <!-- Application Scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/dataService.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/qr.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
