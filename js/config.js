@@ -8,7 +8,7 @@ const CONFIG = {
     USE_MOCK_DATA: false,
 
     // The IP address/URL of the ESP8266 API
-    ESP8266_API_URL: 'http://192.168.1.35/api/data',
+    ESP8266_API_URL: 'http://192.168.1.42/api/data',
 
     // The URL displayed in the QR Code section
     DASHBOARD_URL: 'https://new1-ten-alpha.vercel.app',
