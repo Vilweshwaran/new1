@@ -604,7 +604,7 @@ p { color: var(--text-muted); }
 
 /* ── Tail Wagging Animation ── */
 .pup-tail {
-    transform-origin: 104px 102px;
+    transform-origin: 115px 120px;
     animation: pupWag 0.9s ease-in-out infinite alternate;
 }
 
@@ -649,7 +649,7 @@ p { color: var(--text-muted); }
 
 /* ── Tongue Panting Animation ── */
 .pup-tongue {
-    transform-origin: 80px 75px;
+    transform-origin: 80px 101px;
     animation: tonguePant 0.5s ease-in-out infinite alternate;
 }
 
@@ -660,11 +660,11 @@ p { color: var(--text-muted); }
 
 /* ── Floppy Ears Sway ── */
 .pup-ear-left {
-    transform-origin: 47px 48px;
+    transform-origin: 54px 38px;
     animation: earWiggleLeft 3s ease-in-out infinite;
 }
 .pup-ear-right {
-    transform-origin: 113px 48px;
+    transform-origin: 106px 38px;
     animation: earWiggleRight 3s ease-in-out infinite;
 }
 
