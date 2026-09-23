@@ -57,10 +57,10 @@ const AIInsight = (() => {
         elements.contentArea.innerHTML = `
             <div class="ai-loading">
                 <div class="ai-spinner"></div>
-                <span>Analyzing air quality data…</span>
+                <span>Analysis is being generated, please wait…</span>
             </div>`;
         elements.generateBtn.disabled = true;
-        elements.generateBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Analyzing…';
+        elements.generateBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Generating…';
     }
 
     function showError(message) {
