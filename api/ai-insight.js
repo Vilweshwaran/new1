@@ -9,8 +9,11 @@
  * It is NEVER sent to or visible in the browser.
  */
 
-const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
-const MODEL = 'gpt-4o-mini';
+const https = require('https');
+
+const OPENAI_HOST = 'api.openai.com';
+const OPENAI_PATH = '/v1/chat/completions';
+const MODEL       = 'gpt-4o-mini';
 const MQ135_THRESHOLD = 600;
 
 /**
@@ -19,27 +22,28 @@ const MQ135_THRESHOLD = 600;
  * and what NOT to claim (official AQI, medical advice, etc.)
  */
 function buildPrompt(air, temperature, humidity, status, recentReadings) {
-    const recentSection = Array.isArray(recentReadings) && recentReadings.length > 1
-        ? `
-Recent readings (last ${recentReadings.length}, oldest → newest):
-${recentReadings.map((r, i) => `  ${i + 1}. MQ135=${r.air}, Temp=${r.temperature}°C, Humidity=${r.humidity}%`).join('\n')}
-`
-        : 'No recent trend data is available.';
+    const recentSection =
+        Array.isArray(recentReadings) && recentReadings.length > 1
+            ? `Recent readings (last ${recentReadings.length}, oldest to newest):\n` +
+              recentReadings
+                  .map((r, i) => `  ${i + 1}. MQ135=${r.air}, Temp=${r.temperature}C, Humidity=${r.humidity}%`)
+                  .join('\n')
+            : 'No recent trend data is available.';
 
     return `You are an air quality assistant for an ESP8266 IoT project.
 
-IMPORTANT CONTEXT — READ CAREFULLY:
+IMPORTANT CONTEXT - READ CAREFULLY:
 - The "MQ135 value" is a RAW ADC sensor reading from an MQ135 gas sensor, ranging 0 to 1023.
 - It is NOT an official Air Quality Index (AQI). Do NOT describe it as AQI.
 - The project-specific threshold is ${MQ135_THRESHOLD}: readings BELOW ${MQ135_THRESHOLD} are classified as GOOD, readings AT OR ABOVE ${MQ135_THRESHOLD} are classified as POOR.
 - Do NOT make medical claims or official environmental authority statements.
-- Temperature and humidity are contextual readings from a DHT11 sensor (they influence gas sensor accuracy).
+- Temperature and humidity are contextual readings from a DHT11 sensor.
 - Keep your response cautious, helpful, and non-alarmist.
 
 CURRENT SENSOR SNAPSHOT:
 - MQ135 raw value: ${air} (threshold: ${MQ135_THRESHOLD})
 - Status: ${status}
-- Temperature: ${temperature}°C
+- Temperature: ${temperature}C
 - Humidity: ${humidity}%
 
 ${recentSection}
@@ -54,9 +58,60 @@ Respond with ONLY valid JSON in this exact structure (no markdown, no extra text
 }
 
 /**
- * Main serverless handler
+ * Make an HTTPS POST request to OpenAI using Node's built-in https module.
+ * No external dependencies required.
  */
-export default async function handler(req, res) {
+function callOpenAI(apiKey, messages) {
+    return new Promise((resolve, reject) => {
+        const body = JSON.stringify({
+            model: MODEL,
+            messages: messages,
+            temperature: 0.4,
+            max_tokens: 300
+        });
+
+        const options = {
+            hostname: OPENAI_HOST,
+            path:     OPENAI_PATH,
+            method:   'POST',
+            headers: {
+                'Content-Type':  'application/json',
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Length': Buffer.byteLength(body)
+            }
+        };
+
+        const req = https.request(options, (res) => {
+            let data = '';
+            res.on('data', (chunk) => { data += chunk; });
+            res.on('end', () => {
+                resolve({ statusCode: res.statusCode, body: data });
+            });
+        });
+
+        req.on('error', reject);
+        req.setTimeout(20000, () => {
+            req.destroy(new Error('OpenAI request timed out'));
+        });
+        req.write(body);
+        req.end();
+    });
+}
+
+/**
+ * Main serverless handler (CommonJS export — works without package.json type:module)
+ */
+module.exports = async function handler(req, res) {
+    // Set CORS headers so the browser can call this from any origin
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+    // Handle preflight
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+
     // Only allow POST
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method Not Allowed' });
@@ -81,7 +136,9 @@ export default async function handler(req, res) {
 
     // Basic validation
     if (air === undefined || temperature === undefined || humidity === undefined || !status) {
-        return res.status(400).json({ error: 'Missing required sensor fields: air, temperature, humidity, status.' });
+        return res.status(400).json({
+            error: 'Missing required sensor fields: air, temperature, humidity, status.'
+        });
     }
 
     const prompt = buildPrompt(
@@ -93,39 +150,32 @@ export default async function handler(req, res) {
     );
 
     try {
-        const openaiResponse = await fetch(OPENAI_API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
+        const { statusCode, body: rawBody } = await callOpenAI(apiKey, [
+            {
+                role: 'system',
+                content: 'You are a helpful IoT air quality assistant. Always respond with valid JSON only.'
             },
-            body: JSON.stringify({
-                model: MODEL,
-                messages: [
-                    {
-                        role: 'system',
-                        content: 'You are a helpful IoT air quality assistant. Always respond with valid JSON only.'
-                    },
-                    {
-                        role: 'user',
-                        content: prompt
-                    }
-                ],
-                temperature: 0.4,
-                max_tokens: 300
-            })
-        });
+            {
+                role: 'user',
+                content: prompt
+            }
+        ]);
 
-        if (!openaiResponse.ok) {
-            // Log the error server-side but do NOT expose details to the browser
-            const errText = await openaiResponse.text();
-            console.error(`[ai-insight] OpenAI API error ${openaiResponse.status}:`, errText);
+        if (statusCode !== 200) {
+            // Log server-side, never expose raw OpenAI error to browser
+            console.error(`[ai-insight] OpenAI returned status ${statusCode}:`, rawBody);
             return res.status(503).json({ error: 'AI insight temporarily unavailable.' });
         }
 
-        const openaiData = await openaiResponse.json();
-        const rawContent = openaiData?.choices?.[0]?.message?.content?.trim();
+        let openaiData;
+        try {
+            openaiData = JSON.parse(rawBody);
+        } catch {
+            console.error('[ai-insight] Failed to parse OpenAI response JSON');
+            return res.status(503).json({ error: 'AI insight temporarily unavailable.' });
+        }
 
+        const rawContent = openaiData?.choices?.[0]?.message?.content?.trim();
         if (!rawContent) {
             console.error('[ai-insight] OpenAI returned empty content.');
             return res.status(503).json({ error: 'AI insight temporarily unavailable.' });
@@ -135,7 +185,11 @@ export default async function handler(req, res) {
         let insight;
         try {
             // Strip markdown code fences if the model added them despite instructions
-            const cleaned = rawContent.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim();
+            const cleaned = rawContent
+                .replace(/^```json\s*/i, '')
+                .replace(/^```\s*/i, '')
+                .replace(/```\s*$/, '')
+                .trim();
             insight = JSON.parse(cleaned);
         } catch {
             console.error('[ai-insight] Failed to parse model JSON response:', rawContent);
@@ -150,15 +204,15 @@ export default async function handler(req, res) {
 
         // Return clean insight to the browser — no API key ever included
         return res.status(200).json({
-            assessment: String(insight.assessment),
-            explanation: String(insight.explanation),
+            assessment:     String(insight.assessment),
+            explanation:    String(insight.explanation),
             recommendation: String(insight.recommendation),
-            trend: insight.trend ? String(insight.trend) : null,
-            generatedAt: new Date().toISOString()
+            trend:          insight.trend ? String(insight.trend) : null,
+            generatedAt:    new Date().toISOString()
         });
 
     } catch (networkError) {
-        console.error('[ai-insight] Network error calling OpenAI:', networkError);
+        console.error('[ai-insight] Network error calling OpenAI:', networkError.message);
         return res.status(503).json({ error: 'AI insight temporarily unavailable.' });
     }
-}
+};
