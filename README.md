@@ -9,6 +9,8 @@ A professional, modern, and responsive web dashboard designed for an ESP8266-bas
 - **Responsive Dark Mode UI**: A premium glassmorphism dashboard layout built with Vanilla HTML/CSS that works seamlessly on desktop and mobile.
 - **Demo / Mock Mode**: A built-in data simulator for college presentations when the physical hardware is unavailable.
 - **QR Code Access**: Instantly generates a QR code for your configured dashboard URL to scan and view on a mobile device.
+- **🤖 AI Air Quality Insight**: On-demand AI-powered analysis of sensor readings via a secure Vercel serverless endpoint. The OpenAI API key is **never** exposed to the browser.
+
 
 ## 🛠️ Technology Used
 - **Frontend**: HTML5, CSS3, Vanilla JavaScript (No React/Webpack required).
@@ -21,6 +23,9 @@ A professional, modern, and responsive web dashboard designed for an ESP8266-bas
 ```text
 smart-air-quality-monitor/
 ├── index.html        # Main dashboard structure
+├── vercel.json       # Vercel deployment config (routes API + static files)
+├── api/
+│   └── ai-insight.js # Vercel serverless function — calls OpenAI (server-side only)
 ├── css/
 │   └── styles.css    # Premium dark mode and responsive grid styles
 ├── js/
@@ -29,6 +34,7 @@ smart-air-quality-monitor/
 │   ├── ui.js         # DOM updates and gauge rendering
 │   ├── charts.js     # Chart.js integration for history
 │   ├── qr.js         # QRCode.js integration
+│   ├── aiInsight.js  # AI insight client module (no API key — calls /api/ai-insight)
 │   └── app.js        # Main initialization and polling loop
 └── README.md         # Documentation
 ```
@@ -118,4 +124,139 @@ DASHBOARD_URL: 'http://192.168.x.x/', // Set this to the IP where the dashboard 
 
 ## ⚠️ Important Note About MQ135 Readings
 This dashboard labels the MQ135 data explicitly as **"Raw Sensor Value (0-1023)"**. 
-A raw ADC value from the MQ135 is **not** equivalent to a standardized official Air Quality Index (AQI). Calculating official AQI requires complex calibration, load resistors, and specific environmental baselines. The GOOD/POOR threshold (currently 400) is a project-specific baseline set for demonstration purposes.
+A raw ADC value from the MQ135 is **not** equivalent to a standardized official Air Quality Index (AQI). Calculating official AQI requires complex calibration, load resistors, and specific environmental baselines. The GOOD/POOR threshold (currently 600) is a project-specific baseline set for demonstration purposes.
+
+---
+
+## 🤖 AI Air Quality Insight (Vercel + OpenAI)
+
+### How it Works
+
+The AI insight feature uses a **secure server-side architecture** to protect your OpenAI API key:
+
+```
+Browser Dashboard
+      ↓  (POST /api/ai-insight with sensor readings)
+Vercel Serverless Function  ← reads OPENAI_API_KEY from env
+      ↓  (calls OpenAI API)
+OpenAI gpt-4o-mini
+      ↓  (returns structured JSON insight)
+Dashboard "🤖 AI Air Quality Insight" card
+```
+
+> **Security guarantee**: The `OPENAI_API_KEY` is stored exclusively as a Vercel environment variable. It is **never** included in any file in this repository and is **never** sent to the browser.
+
+---
+
+### Step 1 — Get an OpenAI API Key
+
+1. Go to [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+2. Click **Create new secret key**
+3. Copy the key (starts with `sk-...`)
+
+---
+
+### Step 2 — Add the Key to Vercel
+
+1. Open your project in the [Vercel Dashboard](https://vercel.com/dashboard)
+2. Go to **Settings → Environment Variables**
+3. Click **Add New**
+4. Fill in:
+   - **Name**: `OPENAI_API_KEY`
+   - **Value**: paste your key (e.g. `sk-proj-...`)
+   - **Environment**: select ✅ Production, ✅ Preview, ✅ Development
+5. Click **Save**
+
+> ⚠️ **Never** paste your API key into any `.js`, `.json`, or `.env` file that is committed to Git. The key must only live in Vercel's environment settings.
+
+---
+
+### Step 3 — Redeploy
+
+After adding the environment variable, trigger a fresh deployment:
+
+```bash
+# Option A: Push any commit to your Git branch
+git commit --allow-empty -m "chore: trigger redeploy for OPENAI_API_KEY env var"
+git push
+
+# Option B: Use the Vercel dashboard
+# Go to your project → Deployments → click "Redeploy" on the latest deployment
+```
+
+---
+
+### Step 4 — Test the AI Endpoint
+
+After deployment, you can test the endpoint directly:
+
+```bash
+curl -X POST https://your-project.vercel.app/api/ai-insight \
+  -H "Content-Type: application/json" \
+  -d '{"air": 420, "temperature": 28.5, "humidity": 62, "status": "GOOD"}'
+```
+
+**Expected successful response:**
+```json
+{
+  "assessment": "Good",
+  "explanation": "The MQ135 raw sensor reading of 420 is below the project threshold of 600, indicating acceptable air quality conditions in this environment.",
+  "recommendation": "Air quality appears acceptable. Continue monitoring and ensure good ventilation is maintained.",
+  "trend": null,
+  "generatedAt": "2026-09-23T04:00:00.000Z"
+}
+```
+
+**Expected error response (missing/invalid key):**
+```json
+{ "error": "AI insight temporarily unavailable." }
+```
+
+---
+
+### Local Development with Vercel CLI
+
+To test the serverless function locally before deploying:
+
+```bash
+# Install Vercel CLI
+npm install -g vercel
+
+# Log in
+vercel login
+
+# Create a local .env.local file (NEVER commit this file)
+echo "OPENAI_API_KEY=sk-your-key-here" > .env.local
+
+# Make sure .env.local is in .gitignore
+echo ".env.local" >> .gitignore
+
+# Run the local dev server (serves both static files and /api/* functions)
+vercel dev
+```
+
+Then open `http://localhost:3000` and click **Generate AI Insight**.
+
+---
+
+### AI Insight Behaviour
+
+| Scenario | Result |
+|---|---|
+| Click "Generate AI Insight" | AI analysis runs, card shows Assessment / Explanation / Recommendation / Trend |
+| Click again within 60 seconds | Cooldown message shown, no API call made |
+| OpenAI unavailable / key missing | Card shows "AI insight temporarily unavailable." |
+| Sensor not yet connected | Card shows "No sensor data available" |
+| Sensor polling (every 2 s) | Continues normally — completely independent of AI requests |
+
+---
+
+### What the AI Is (and Isn't) Told
+
+The prompt explicitly informs the model:
+- The MQ135 value is a **raw ADC reading (0–1023)**, not official AQI
+- The project threshold is **600** (below = GOOD, at/above = POOR)
+- Temperature and humidity are contextual DHT11 readings
+- Responses must be **cautious and non-medical**
+
+The AI model used is **`gpt-4o-mini`** — fast, cost-efficient, and well-suited for this short analytical task.

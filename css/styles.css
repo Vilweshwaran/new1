@@ -325,3 +325,243 @@ p { color: var(--text-muted); }
         flex-direction: column;
     }
 }
+
+/* ═══════════════════════════════════════════════════════
+   AI Air Quality Insight Card
+   ═══════════════════════════════════════════════════════ */
+
+.ai-card {
+    grid-column: span 12;
+    border-top: 2px solid transparent;
+    background-image:
+        linear-gradient(var(--card-bg), var(--card-bg)),
+        linear-gradient(90deg, #6366f1 0%, #8b5cf6 50%, #3b82f6 100%);
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+    border-radius: 12px;
+}
+
+.ai-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+}
+
+.ai-card-title-group {
+    flex: 1;
+    min-width: 0;
+}
+
+.ai-card-subtitle {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 0.3rem;
+    line-height: 1.4;
+}
+
+.ai-card-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.4rem;
+    flex-shrink: 0;
+}
+
+/* ── Generate Button ─────────────────────────────────── */
+.ai-btn {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: #fff;
+    border: none;
+    padding: 0.65rem 1.4rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: var(--font-main);
+    font-weight: 600;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
+    white-space: nowrap;
+}
+
+.ai-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #4f52d0 0%, #7c3aed 100%);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45);
+    transform: translateY(-1px);
+}
+
+.ai-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.ai-cooldown {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.ai-last-generated {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* ── Placeholder (initial state) ─────────────────────── */
+.ai-insight-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 2.5rem 1rem;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.ai-placeholder-icon {
+    font-size: 2.5rem;
+    color: #6366f1;
+    opacity: 0.5;
+}
+
+/* ── Loading State ───────────────────────────────────── */
+.ai-loading {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 2rem 0;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+.ai-spinner {
+    width: 22px;
+    height: 22px;
+    border: 3px solid rgba(99, 102, 241, 0.2);
+    border-top-color: #6366f1;
+    border-radius: 50%;
+    animation: ai-spin 0.75s linear infinite;
+    flex-shrink: 0;
+}
+
+@keyframes ai-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ── Error State ─────────────────────────────────────── */
+.ai-error-state {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.5rem 0;
+    color: var(--accent-poor);
+    font-size: 0.95rem;
+}
+
+.ai-error-state i {
+    font-size: 1.3rem;
+    flex-shrink: 0;
+}
+
+/* ── Insight Result Grid ─────────────────────────────── */
+.ai-insight-grid {
+    display: grid;
+    grid-template-columns: auto 1fr 1fr 1fr;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.ai-insight-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.ai-insight-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.ai-insight-text {
+    font-size: 0.9rem;
+    color: var(--text-main);
+    line-height: 1.55;
+}
+
+.trend-text {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+/* ── Assessment Badge ────────────────────────────────── */
+.ai-assessment {
+    font-size: 1.6rem;
+    font-weight: 700;
+    padding: 0.3rem 1rem;
+    border-radius: 8px;
+    display: inline-block;
+    white-space: nowrap;
+}
+
+.ai-assessment.good,
+.ai-assessment.good.moderate {
+    color: var(--accent-good);
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.ai-assessment.poor {
+    color: var(--accent-poor);
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.ai-assessment.moderate {
+    color: var(--accent-warning);
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+/* ── Responsive Overrides ────────────────────────────── */
+@media (max-width: 900px) {
+    .ai-insight-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    .ai-insight-section--assessment {
+        grid-column: span 2;
+    }
+}
+
+@media (max-width: 600px) {
+    .ai-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .ai-card-actions {
+        align-items: flex-start;
+        width: 100%;
+    }
+    .ai-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    .ai-insight-grid {
+        grid-template-columns: 1fr;
+    }
+    .ai-insight-section--assessment {
+        grid-column: span 1;
+    }
+}
+

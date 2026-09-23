@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     UI.init();
     HistoryChart.init();
     QRService.init();
+    AIInsight.init();
     
     // Polling interval reference
     let pollInterval;
@@ -29,6 +30,11 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Update Chart
             HistoryChart.update(data.temperature, data.humidity);
+
+            // Feed latest reading into AI insight module (maintains trend buffer
+            // and tracks current data for the "Generate AI Insight" button).
+            // This does NOT trigger an AI API call — that only happens on user click.
+            AIInsight.onNewData(data);
             
         } catch (error) {
             failCount++;

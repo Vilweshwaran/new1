@@ -1,0 +1,13 @@
+# Local Vercel dev environment — NEVER commit this file
+.env.local
+.env
+
+# Vercel build output
+.vercel
+
+# OS artefacts
+.DS_Store
+Thumbs.db
+
+# Node modules (if Vercel CLI installs any)
+node_modules/
