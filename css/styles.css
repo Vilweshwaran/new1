@@ -134,7 +134,8 @@ p { color: var(--text-muted); }
 }
 
 /* Card Placements */
-.air-quality-card { grid-column: span 8; }
+.pup-card { grid-column: span 4; }
+.air-quality-card { grid-column: span 4; }
 .env-cards-column { grid-column: span 4; display: flex; flex-direction: column; gap: 1.5rem; }
 .chart-card { grid-column: span 8; }
 .qr-card { grid-column: span 4; }
@@ -304,7 +305,7 @@ p { color: var(--text-muted); }
 
 /* Responsive Design */
 @media (max-width: 900px) {
-    .air-quality-card, .chart-card { grid-column: span 12; }
+    .pup-card, .air-quality-card, .chart-card { grid-column: span 12; }
     .env-cards-column, .qr-card { grid-column: span 12; }
     
     .env-cards-column {
@@ -564,4 +565,189 @@ p { color: var(--text-muted); }
         grid-column: span 1;
     }
 }
+
+/* ═══════════════════════════════════════════════════════
+   Aera the Pup Mascot Card & Animations
+   ═══════════════════════════════════════════════════════ */
+
+.pup-card {
+    grid-column: span 4;
+}
+
+.pup-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1;
+    min-height: 220px;
+    padding: 1rem 0;
+}
+
+.pup-avatar-container {
+    width: 140px;
+    height: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    margin-bottom: 0.8rem;
+    transition: transform 0.3s ease;
+}
+
+.pup-svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.25));
+}
+
+/* ── Tail Wagging Animation ── */
+.pup-tail {
+    transform-origin: 104px 102px;
+    animation: pupWag 0.9s ease-in-out infinite alternate;
+}
+
+@keyframes pupWag {
+    0%   { transform: rotate(-8deg); }
+    100% { transform: rotate(18deg); }
+}
+
+/* ── Gentle Breathing Animation (Good & Moderate) ── */
+.pup-avatar-container.pup-state-good .pup-svg,
+.pup-avatar-container.pup-state-moderate .pup-svg {
+    animation: pupBreathe 3s ease-in-out infinite;
+}
+
+@keyframes pupBreathe {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-4px); }
+}
+
+/* ── Panting Animation (Poor State) ── */
+.pup-avatar-container.pup-state-poor .pup-svg {
+    animation: pupPant 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes pupPant {
+    0%   { transform: scale(1) translateY(0); }
+    100% { transform: scale(1.025, 0.975) translateY(2px); }
+}
+
+/* ── Shivering / Coughing Vibration (Hazardous State) ── */
+.pup-avatar-container.pup-state-hazardous .pup-svg {
+    animation: pupCough 0.35s ease-in-out infinite;
+}
+
+@keyframes pupCough {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    20%      { transform: translate(-2px, -3px) rotate(-1.5deg); }
+    40%      { transform: translate(3px, 1px) rotate(1.5deg); }
+    60%      { transform: translate(-3px, 2px) rotate(-1deg); }
+    80%      { transform: translate(2px, -2px) rotate(1deg); }
+}
+
+/* ── Tongue Panting Animation ── */
+.pup-tongue {
+    transform-origin: 80px 75px;
+    animation: tonguePant 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes tonguePant {
+    0%   { transform: scaleY(0.9); }
+    100% { transform: scaleY(1.2); }
+}
+
+/* ── Floppy Ears Sway ── */
+.pup-ear-left {
+    transform-origin: 47px 48px;
+    animation: earWiggleLeft 3s ease-in-out infinite;
+}
+.pup-ear-right {
+    transform-origin: 113px 48px;
+    animation: earWiggleRight 3s ease-in-out infinite;
+}
+
+@keyframes earWiggleLeft {
+    0%, 100% { transform: rotate(0deg); }
+    50%      { transform: rotate(-4deg); }
+}
+@keyframes earWiggleRight {
+    0%, 100% { transform: rotate(0deg); }
+    50%      { transform: rotate(4deg); }
+}
+
+/* ── Cough Radiating Lines Pulse ── */
+@keyframes coughPulse {
+    0%, 100% { opacity: 0.25; transform: scale(0.92); }
+    50%      { opacity: 1; transform: scale(1.1); }
+}
+
+.pup-cough-lines {
+    transform-origin: 80px 25px;
+    animation: coughPulse 0.4s ease-in-out infinite;
+}
+
+/* ── State Visibility Rules ── */
+.eyes-happy, .eyes-moderate, .eyes-pant, .eyes-cough,
+.mouth-smile, .mouth-neutral, .mouth-pant, .mouth-cough,
+.pup-cough-lines, .pup-paws-resting, .pup-paws-raised {
+    display: none;
+}
+
+/* Good State */
+.pup-state-good .eyes-happy,
+.pup-state-good .mouth-smile,
+.pup-state-good .pup-paws-resting {
+    display: block;
+}
+
+/* Moderate State */
+.pup-state-moderate .eyes-moderate,
+.pup-state-moderate .mouth-neutral,
+.pup-state-moderate .pup-paws-resting {
+    display: block;
+}
+
+/* Poor State */
+.pup-state-poor .eyes-pant,
+.pup-state-poor .mouth-pant,
+.pup-state-poor .pup-paws-resting {
+    display: block;
+}
+
+/* Hazardous State */
+.pup-state-hazardous .eyes-cough,
+.pup-state-hazardous .mouth-cough,
+.pup-state-hazardous .pup-paws-raised,
+.pup-state-hazardous .pup-cough-lines {
+    display: block;
+}
+
+/* ── Status Text below Pup ── */
+.pup-status-text {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-top: 0.25rem;
+    text-align: center;
+    letter-spacing: 0.3px;
+    transition: color 0.3s ease;
+}
+
+.pup-status-text.pup-good {
+    color: #10b981;
+}
+
+.pup-status-text.pup-moderate {
+    color: #f59e0b;
+}
+
+.pup-status-text.pup-poor {
+    color: #f97316;
+}
+
+.pup-status-text.pup-hazardous {
+    color: #ef4444;
+}
+
 

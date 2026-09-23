@@ -37,7 +37,107 @@
         <!-- Main Dashboard Content -->
         <main class="dashboard-grid">
             
-            <!-- Air Quality Card (Large) -->
+            <!-- Aera the Pup Mascot Card -->
+            <section class="card pup-card">
+                <div class="card-header">
+                    <h2><i class="fa-solid fa-dog"></i> Aera the Pup</h2>
+                </div>
+                <div class="card-body pup-body">
+                    <div id="pup-avatar-container" class="pup-avatar-container pup-state-good">
+                        <svg viewBox="0 0 160 160" class="pup-svg" aria-label="Aera the Pup Mascot">
+                            <defs>
+                                <linearGradient id="pupBodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" stop-color="#fae37b" />
+                                    <stop offset="100%" stop-color="#f4c430" />
+                                </linearGradient>
+                                <linearGradient id="pupEarGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" stop-color="#eab308" />
+                                    <stop offset="100%" stop-color="#ca8a04" />
+                                </linearGradient>
+                            </defs>
+
+                            <!-- Tail (Oscillating Wag Animation) -->
+                            <path class="pup-tail" d="M 104 102 Q 130 92 126 72 Q 116 75 102 92 Z" fill="#f4c430" />
+
+                            <!-- Radiating Cough Spark Lines (Shown only during Hazardous state) -->
+                            <g class="pup-cough-lines">
+                                <line x1="52" y1="34" x2="42" y2="24" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round" />
+                                <line x1="80" y1="28" x2="80" y2="16" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round" />
+                                <line x1="108" y1="34" x2="118" y2="24" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round" />
+                            </g>
+
+                            <!-- Chubby Main Body / Head -->
+                            <rect class="pup-main-body" x="46" y="44" width="68" height="84" rx="34" fill="url(#pupBodyGrad)" />
+
+                            <!-- Floppy Puppy Ears -->
+                            <path class="pup-ear pup-ear-left" d="M 47 48 C 33 48 28 72 33 87 C 38 95 48 90 49 70 Z" fill="url(#pupEarGrad)" />
+                            <path class="pup-ear pup-ear-right" d="M 113 48 C 127 48 132 72 127 87 C 122 95 112 90 111 70 Z" fill="url(#pupEarGrad)" />
+
+                            <!-- Snout Oval -->
+                            <ellipse cx="80" cy="73" rx="13" ry="9" fill="#fff9db" />
+
+                            <!-- Cute Dark Nose -->
+                            <ellipse cx="80" cy="69" rx="4" ry="2.8" fill="#2d1d13" />
+
+                            <!-- Mouth Variations -->
+                            <g class="pup-mouths">
+                                <!-- Happy Smile -->
+                                <path class="mouth-smile" d="M 74 73 Q 80 81 86 73" fill="none" stroke="#2d1d13" stroke-width="2" stroke-linecap="round" />
+                                <!-- Moderate Line -->
+                                <path class="mouth-neutral" d="M 76 74 Q 80 76 84 74" fill="none" stroke="#2d1d13" stroke-width="2" stroke-linecap="round" />
+                                <!-- Panting Open Mouth with Tongue -->
+                                <g class="mouth-pant">
+                                    <path d="M 74 72 Q 80 82 86 72 Z" fill="#991b1b" />
+                                    <path class="pup-tongue" d="M 77 75 C 77 84 83 84 83 75 Z" fill="#f472b6" />
+                                </g>
+                                <!-- Coughing Mouth -->
+                                <ellipse class="mouth-cough" cx="80" cy="75" rx="3.5" ry="4" fill="#2d1d13" />
+                            </g>
+
+                            <!-- Eyes Variations -->
+                            <g class="pup-eyes">
+                                <!-- Happy Curved Eyes (^ ^) -->
+                                <path class="eyes-happy" d="M 59 61 Q 66 53 73 61 M 87 61 Q 94 53 101 61" fill="none" stroke="#2d1d13" stroke-width="3" stroke-linecap="round" />
+                                
+                                <!-- Moderate Open Dot Eyes -->
+                                <g class="eyes-moderate">
+                                    <circle cx="66" cy="59" r="3.8" fill="#2d1d13" />
+                                    <circle cx="94" cy="59" r="3.8" fill="#2d1d13" />
+                                    <circle cx="67.5" cy="57.5" r="1.2" fill="#ffffff" />
+                                    <circle cx="95.5" cy="57.5" r="1.2" fill="#ffffff" />
+                                </g>
+
+                                <!-- Pant Droopy Eyes -->
+                                <g class="eyes-pant">
+                                    <ellipse cx="66" cy="60" rx="3.6" ry="3.2" fill="#2d1d13" />
+                                    <ellipse cx="94" cy="60" rx="3.6" ry="3.2" fill="#2d1d13" />
+                                </g>
+
+                                <!-- Hazardous Squinting Eyes (> <) -->
+                                <g class="eyes-cough">
+                                    <path d="M 61 55 L 71 60 L 61 65" fill="none" stroke="#2d1d13" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" />
+                                    <path d="M 99 55 L 89 60 L 99 65" fill="none" stroke="#2d1d13" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" />
+                                </g>
+                            </g>
+
+                            <!-- Resting Paws (Default) -->
+                            <g class="pup-paws-resting">
+                                <ellipse cx="68" cy="116" rx="7" ry="5.5" fill="#f4c430" stroke="#ca8a04" stroke-width="1.2" />
+                                <ellipse cx="92" cy="116" rx="7" ry="5.5" fill="#f4c430" stroke="#ca8a04" stroke-width="1.2" />
+                            </g>
+
+                            <!-- Raised Paws (Shown during Coughing / Distress) -->
+                            <g class="pup-paws-raised">
+                                <circle cx="56" cy="75" r="7.5" fill="#f4c430" stroke="#ca8a04" stroke-width="1.2" />
+                                <circle cx="104" cy="75" r="7.5" fill="#f4c430" stroke="#ca8a04" stroke-width="1.2" />
+                            </g>
+                        </svg>
+                    </div>
+                    <div id="pup-status-text" class="pup-status-text pup-good">Happy and healthy!</div>
+                </div>
+            </section>
+
+            <!-- Air Quality Card (Gauge) -->
             <section class="card air-quality-card">
                 <div class="card-header">
                     <h2><i class="fa-solid fa-wind"></i> Air Quality</h2>
@@ -155,6 +255,7 @@
     <script src="js/charts.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/qr.js"></script>
+    <script src="js/pup.js"></script>
     <script src="js/aiInsight.js"></script>
     <script src="js/app.js"></script>
 </body>

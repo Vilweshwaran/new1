@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     UI.init();
     HistoryChart.init();
     QRService.init();
+    AeraPup.init();
     AIInsight.init();
     
     // Polling interval reference
@@ -27,6 +28,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // Update UI
             UI.updateConnectionStatus(true);
             UI.updateData(data);
+
+            // Update Mascot
+            AeraPup.update(data);
             
             // Update Chart
             HistoryChart.update(data.temperature, data.humidity);
