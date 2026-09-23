@@ -1,25 +1,23 @@
 /**
  * Vercel Serverless Function: /api/ai-insight
  *
- * Accepts POST requests from the dashboard with current sensor readings,
- * calls the OpenAI API using a server-side environment variable, and
- * returns a structured AI-generated air quality insight.
+ * Accepts POST requests from the dashboard with current sensor readings.
+ * Supports multiple providers automatically based on environment variables:
+ *   1. Groq (GROQ_API_KEY) - 100% Free at console.groq.com
+ *   2. Google Gemini (GEMINI_API_KEY) - 100% Free at aistudio.google.com
+ *   3. AWS Bedrock (AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY)
+ *   4. OpenAI (OPENAI_API_KEY)
  *
- * SECURITY: OPENAI_API_KEY is only read server-side here.
- * It is NEVER sent to or visible in the browser.
+ * SECURITY: All credentials are read server-side only.
+ * They are NEVER exposed or sent to the browser.
  */
 
 const https = require('https');
 
-const OPENAI_HOST = 'api.openai.com';
-const OPENAI_PATH = '/v1/chat/completions';
-const MODEL       = 'gpt-4o-mini';
 const MQ135_THRESHOLD = 600;
 
 /**
- * Build the prompt sent to OpenAI.
- * Carefully instructs the model about what MQ135 raw values mean
- * and what NOT to claim (official AQI, medical advice, etc.)
+ * Build the prompt sent to AI.
  */
 function buildPrompt(air, temperature, humidity, status, recentReadings) {
     const recentSection =
@@ -58,25 +56,25 @@ Respond with ONLY valid JSON in this exact structure (no markdown, no extra text
 }
 
 /**
- * Make an HTTPS POST request to OpenAI using Node's built-in https module.
- * No external dependencies required.
+ * Universal OpenAI-compatible HTTPS request helper
+ * Works with Groq, Google Gemini, and OpenAI!
  */
-function callOpenAI(apiKey, messages) {
+function callOpenAICompatible(hostname, path, apiKey, model, messages) {
     return new Promise((resolve, reject) => {
         const body = JSON.stringify({
-            model: MODEL,
+            model: model,
             messages: messages,
             temperature: 0.4,
             max_tokens: 300
         });
 
         const options = {
-            hostname: OPENAI_HOST,
-            path:     OPENAI_PATH,
+            hostname: hostname,
+            path:     path,
             method:   'POST',
             headers: {
-                'Content-Type':  'application/json',
-                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type':   'application/json',
+                'Authorization':  `Bearer ${apiKey.trim()}`,
                 'Content-Length': Buffer.byteLength(body)
             }
         };
@@ -91,7 +89,7 @@ function callOpenAI(apiKey, messages) {
 
         req.on('error', reject);
         req.setTimeout(20000, () => {
-            req.destroy(new Error('OpenAI request timed out'));
+            req.destroy(new Error('AI request timed out'));
         });
         req.write(body);
         req.end();
@@ -99,10 +97,39 @@ function callOpenAI(apiKey, messages) {
 }
 
 /**
- * Main serverless handler (CommonJS export — works without package.json type:module)
+ * Call AWS Bedrock using Converse API
+ */
+async function callBedrock(prompt) {
+    const { BedrockRuntimeClient, ConverseCommand } = require('@aws-sdk/client-bedrock-runtime');
+    const region = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1';
+    const modelId = process.env.BEDROCK_MODEL_ID || 'anthropic.claude-3-haiku-20240307-v1:0';
+
+    const clientConfig = { region };
+    if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
+        clientConfig.credentials = {
+            accessKeyId: process.env.AWS_ACCESS_KEY_ID.trim(),
+            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY.trim(),
+            ...(process.env.AWS_SESSION_TOKEN ? { sessionToken: process.env.AWS_SESSION_TOKEN.trim() } : {})
+        };
+    }
+
+    const client = new BedrockRuntimeClient(clientConfig);
+    const command = new ConverseCommand({
+        modelId,
+        messages: [{ role: 'user', content: [{ text: prompt }] }],
+        system: [{ text: 'You are a helpful IoT air quality assistant. Always respond with valid JSON only.' }],
+        inferenceConfig: { maxTokens: 300, temperature: 0.4 }
+    });
+
+    const response = await client.send(command);
+    return response?.output?.message?.content?.[0]?.text;
+}
+
+/**
+ * Main serverless handler
  */
 module.exports = async function handler(req, res) {
-    // Set CORS headers so the browser can call this from any origin
+    // Set CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -112,17 +139,19 @@ module.exports = async function handler(req, res) {
         return res.status(200).end();
     }
 
-    // Only allow POST
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method Not Allowed' });
     }
 
-    // Read the API key from server-side environment only
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-        console.error('[ai-insight] OPENAI_API_KEY environment variable is not set.');
+    // Determine available provider
+    const groqKey    = process.env.GROQ_API_KEY;
+    const geminiKey  = process.env.GEMINI_API_KEY;
+    const hasAws     = Boolean(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY);
+    const openaiKey  = process.env.OPENAI_API_KEY;
+
+    if (!groqKey && !geminiKey && !hasAws && !openaiKey) {
         return res.status(503).json({
-            error: 'OPENAI_API_KEY is not set in Vercel environment variables. Please add it in Vercel Settings -> Environment Variables and redeploy.'
+            error: 'No AI key configured. Add GROQ_API_KEY (Free at console.groq.com) or GEMINI_API_KEY (Free at aistudio.google.com) in Vercel Environment Variables.'
         });
     }
 
@@ -136,7 +165,6 @@ module.exports = async function handler(req, res) {
 
     const { air, temperature, humidity, status, recentReadings } = body || {};
 
-    // Basic validation
     if (air === undefined || temperature === undefined || humidity === undefined || !status) {
         return res.status(400).json({
             error: 'Missing required sensor fields: air, temperature, humidity, status.'
@@ -151,78 +179,113 @@ module.exports = async function handler(req, res) {
         Array.isArray(recentReadings) ? recentReadings.slice(-10) : []
     );
 
+    const messages = [
+        {
+            role: 'system',
+            content: 'You are a helpful IoT air quality assistant. Always respond with valid JSON only.'
+        },
+        {
+            role: 'user',
+            content: prompt
+        }
+    ];
+
+    let rawContent;
+    let providerName = '';
+
     try {
-        const { statusCode, body: rawBody } = await callOpenAI(apiKey, [
-            {
-                role: 'system',
-                content: 'You are a helpful IoT air quality assistant. Always respond with valid JSON only.'
-            },
-            {
-                role: 'user',
-                content: prompt
+        if (groqKey) {
+            // --- 1. Groq (Free, ultra-fast) ---
+            providerName = 'Groq (llama-3.1-8b)';
+            const { statusCode, body: rawBody } = await callOpenAICompatible(
+                'api.groq.com',
+                '/openai/v1/chat/completions',
+                groqKey,
+                process.env.GROQ_MODEL || 'llama-3.1-8b-instant',
+                messages
+            );
+            if (statusCode !== 200) {
+                return res.status(503).json({ error: `Groq API error (${statusCode}): ${rawBody}` });
             }
-        ]);
+            const data = JSON.parse(rawBody);
+            rawContent = data?.choices?.[0]?.message?.content?.trim();
 
-        if (statusCode !== 200) {
-            console.error(`[ai-insight] OpenAI returned status ${statusCode}:`, rawBody);
-            let detail = `Status ${statusCode}`;
-            try {
-                const parsed = JSON.parse(rawBody);
-                if (parsed?.error?.message) {
-                    detail = parsed.error.message;
-                }
-            } catch (_) {}
-            return res.status(503).json({
-                error: `OpenAI API error (${statusCode}): ${detail}`
-            });
+        } else if (geminiKey) {
+            // --- 2. Google Gemini (Free tier) ---
+            providerName = 'Google Gemini';
+            const { statusCode, body: rawBody } = await callOpenAICompatible(
+                'generativelanguage.googleapis.com',
+                '/v1beta/openai/chat/completions',
+                geminiKey,
+                process.env.GEMINI_MODEL || 'gemini-1.5-flash',
+                messages
+            );
+            if (statusCode !== 200) {
+                return res.status(503).json({ error: `Gemini API error (${statusCode}): ${rawBody}` });
+            }
+            const data = JSON.parse(rawBody);
+            rawContent = data?.choices?.[0]?.message?.content?.trim();
+
+        } else if (hasAws) {
+            // --- 3. AWS Bedrock ---
+            providerName = 'AWS Bedrock';
+            rawContent = await callBedrock(prompt);
+
+        } else if (openaiKey) {
+            // --- 4. OpenAI ---
+            providerName = 'OpenAI';
+            const { statusCode, body: rawBody } = await callOpenAICompatible(
+                'api.openai.com',
+                '/v1/chat/completions',
+                openaiKey,
+                'gpt-4o-mini',
+                messages
+            );
+            if (statusCode !== 200) {
+                let detail = `Status ${statusCode}`;
+                try {
+                    const parsed = JSON.parse(rawBody);
+                    if (parsed?.error?.message) detail = parsed.error.message;
+                } catch (_) {}
+                return res.status(503).json({ error: `OpenAI API error (${statusCode}): ${detail}` });
+            }
+            const data = JSON.parse(rawBody);
+            rawContent = data?.choices?.[0]?.message?.content?.trim();
         }
 
-        let openaiData;
-        try {
-            openaiData = JSON.parse(rawBody);
-        } catch {
-            console.error('[ai-insight] Failed to parse OpenAI response JSON');
-            return res.status(503).json({ error: 'Failed to parse AI response.' });
-        }
-
-        const rawContent = openaiData?.choices?.[0]?.message?.content?.trim();
-        if (!rawContent) {
-            console.error('[ai-insight] OpenAI returned empty content.');
-            return res.status(503).json({ error: 'AI insight temporarily unavailable.' });
-        }
-
-        // Parse the JSON response from the model
-        let insight;
-        try {
-            // Strip markdown code fences if the model added them despite instructions
-            const cleaned = rawContent
-                .replace(/^```json\s*/i, '')
-                .replace(/^```\s*/i, '')
-                .replace(/```\s*$/, '')
-                .trim();
-            insight = JSON.parse(cleaned);
-        } catch {
-            console.error('[ai-insight] Failed to parse model JSON response:', rawContent);
-            return res.status(503).json({ error: 'AI insight temporarily unavailable.' });
-        }
-
-        // Validate required fields
-        if (!insight.assessment || !insight.explanation || !insight.recommendation) {
-            console.error('[ai-insight] Model response missing required fields:', insight);
-            return res.status(503).json({ error: 'AI insight temporarily unavailable.' });
-        }
-
-        // Return clean insight to the browser — no API key ever included
-        return res.status(200).json({
-            assessment:     String(insight.assessment),
-            explanation:    String(insight.explanation),
-            recommendation: String(insight.recommendation),
-            trend:          insight.trend ? String(insight.trend) : null,
-            generatedAt:    new Date().toISOString()
-        });
-
-    } catch (networkError) {
-        console.error('[ai-insight] Network error calling OpenAI:', networkError.message);
-        return res.status(503).json({ error: 'AI insight temporarily unavailable.' });
+    } catch (err) {
+        console.error('[ai-insight] Error calling AI provider:', err);
+        return res.status(503).json({ error: `AI service error: ${err.message}` });
     }
+
+    if (!rawContent) {
+        return res.status(503).json({ error: 'AI returned empty content.' });
+    }
+
+    // Parse model JSON response
+    let insight;
+    try {
+        const cleaned = rawContent
+            .replace(/^```json\s*/i, '')
+            .replace(/^```\s*/i, '')
+            .replace(/```\s*$/, '')
+            .trim();
+        insight = JSON.parse(cleaned);
+    } catch {
+        console.error('[ai-insight] Failed to parse model JSON:', rawContent);
+        return res.status(503).json({ error: 'Failed to parse model insight JSON.' });
+    }
+
+    if (!insight.assessment || !insight.explanation || !insight.recommendation) {
+        return res.status(503).json({ error: 'Model response missing required fields.' });
+    }
+
+    return res.status(200).json({
+        assessment:     String(insight.assessment),
+        explanation:    String(insight.explanation),
+        recommendation: String(insight.recommendation),
+        trend:          insight.trend ? String(insight.trend) : null,
+        provider:       providerName,
+        generatedAt:    new Date().toISOString()
+    });
 };
