@@ -121,7 +121,9 @@ module.exports = async function handler(req, res) {
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
         console.error('[ai-insight] OPENAI_API_KEY environment variable is not set.');
-        return res.status(503).json({ error: 'AI insight temporarily unavailable.' });
+        return res.status(503).json({
+            error: 'OPENAI_API_KEY is not set in Vercel environment variables. Please add it in Vercel Settings -> Environment Variables and redeploy.'
+        });
     }
 
     // Parse and validate request body
@@ -162,9 +164,17 @@ module.exports = async function handler(req, res) {
         ]);
 
         if (statusCode !== 200) {
-            // Log server-side, never expose raw OpenAI error to browser
             console.error(`[ai-insight] OpenAI returned status ${statusCode}:`, rawBody);
-            return res.status(503).json({ error: 'AI insight temporarily unavailable.' });
+            let detail = `Status ${statusCode}`;
+            try {
+                const parsed = JSON.parse(rawBody);
+                if (parsed?.error?.message) {
+                    detail = parsed.error.message;
+                }
+            } catch (_) {}
+            return res.status(503).json({
+                error: `OpenAI API error (${statusCode}): ${detail}`
+            });
         }
 
         let openaiData;
@@ -172,7 +182,7 @@ module.exports = async function handler(req, res) {
             openaiData = JSON.parse(rawBody);
         } catch {
             console.error('[ai-insight] Failed to parse OpenAI response JSON');
-            return res.status(503).json({ error: 'AI insight temporarily unavailable.' });
+            return res.status(503).json({ error: 'Failed to parse AI response.' });
         }
 
         const rawContent = openaiData?.choices?.[0]?.message?.content?.trim();

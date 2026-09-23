@@ -187,7 +187,7 @@ const AIInsight = (() => {
 
         } catch (err) {
             console.error('[AIInsight] Request failed:', err.message);
-            showError('AI insight temporarily unavailable.');
+            showError(err.message || 'AI insight temporarily unavailable.');
             // Reset cooldown so user can retry immediately after an error
             lastRequestTime = 0;
             resetButton();
