@@ -56,11 +56,29 @@ Respond with ONLY valid JSON in this exact structure (no markdown, no extra text
 }
 
 /**
+ * Thoroughly sanitize API keys to remove quotes, trailing/leading newlines,
+ * spaces, or non-printable characters that trigger Node's "Invalid character in header content" error.
+ */
+function sanitizeApiKey(raw) {
+    if (!raw) return '';
+    let key = String(raw).trim();
+    // Remove wrapping quotes if entered by user (e.g. "gsk_..." -> gsk_...)
+    key = key.replace(/^["']|["']$/g, '').trim();
+    // If user accidentally pasted "Bearer gsk_...", remove leading "Bearer "
+    key = key.replace(/^Bearer\s+/i, '').trim();
+    // Strip all whitespace, newlines, carriage returns, and non-printable characters
+    key = key.replace(/[\r\n\t\s]/g, '');
+    key = key.replace(/[^\x21-\x7E]/g, '');
+    return key;
+}
+
+/**
  * Universal OpenAI-compatible HTTPS request helper
  * Works with Groq, Google Gemini, and OpenAI!
  */
 function callOpenAICompatible(hostname, path, apiKey, model, messages) {
     return new Promise((resolve, reject) => {
+        const cleanKey = sanitizeApiKey(apiKey);
         const body = JSON.stringify({
             model: model,
             messages: messages,
@@ -74,7 +92,7 @@ function callOpenAICompatible(hostname, path, apiKey, model, messages) {
             method:   'POST',
             headers: {
                 'Content-Type':   'application/json',
-                'Authorization':  `Bearer ${apiKey.trim()}`,
+                'Authorization':  `Bearer ${cleanKey}`,
                 'Content-Length': Buffer.byteLength(body)
             }
         };
@@ -144,10 +162,10 @@ module.exports = async function handler(req, res) {
     }
 
     // Determine available provider
-    const groqKey    = process.env.GROQ_API_KEY;
-    const geminiKey  = process.env.GEMINI_API_KEY;
+    const groqKey    = sanitizeApiKey(process.env.GROQ_API_KEY);
+    const geminiKey  = sanitizeApiKey(process.env.GEMINI_API_KEY);
     const hasAws     = Boolean(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY);
-    const openaiKey  = process.env.OPENAI_API_KEY;
+    const openaiKey  = sanitizeApiKey(process.env.OPENAI_API_KEY);
 
     if (!groqKey && !geminiKey && !hasAws && !openaiKey) {
         return res.status(503).json({
