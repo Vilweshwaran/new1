@@ -96,11 +96,8 @@
                                 <path class="mouth-smile" d="M 72 100 Q 80 110 88 100" fill="none" stroke="#2d1d13" stroke-width="2" stroke-linecap="round" />
                                 <!-- Moderate Neutral -->
                                 <path class="mouth-neutral" d="M 74 101 Q 80 104 86 101" fill="none" stroke="#2d1d13" stroke-width="2" stroke-linecap="round" />
-                                <!-- Panting Open Mouth with Tongue -->
-                                <g class="mouth-pant">
-                                    <path d="M 72 98 Q 80 110 88 98 Z" fill="#991b1b" />
-                                    <path class="pup-tongue" d="M 76 101 C 76 112 84 112 84 101 Z" fill="#f472b6" />
-                                </g>
+                                <!-- Sad Frown (Poor / Crying) -->
+                                <path class="mouth-sad" d="M 74 106 Q 80 99 86 106" fill="none" stroke="#2d1d13" stroke-width="2" stroke-linecap="round" />
                                 <!-- Coughing Open Mouth -->
                                 <ellipse class="mouth-cough" cx="80" cy="102" rx="4" ry="5" fill="#2d1d13" />
                             </g>
@@ -118,10 +115,14 @@
                                     <circle cx="95" cy="76" r="1.5" fill="#ffffff" />
                                 </g>
 
-                                <!-- Pant Droopy Eyes -->
-                                <g class="eyes-pant">
-                                    <ellipse cx="67" cy="80" rx="4.2" ry="3.5" fill="#2d1d13" />
-                                    <ellipse cx="93" cy="80" rx="4.2" ry="3.5" fill="#2d1d13" />
+                                <!-- Sad Crying Eyes (with tear drops) -->
+                                <g class="eyes-sad">
+                                    <!-- Sad downward-curved eyes -->
+                                    <path d="M 60 78 Q 67 84 74 78" fill="none" stroke="#2d1d13" stroke-width="3" stroke-linecap="round" />
+                                    <path d="M 86 78 Q 93 84 100 78" fill="none" stroke="#2d1d13" stroke-width="3" stroke-linecap="round" />
+                                    <!-- Animated tear drops -->
+                                    <circle class="pup-tear pup-tear-left" cx="68" cy="86" r="2.5" fill="#60a5fa" />
+                                    <circle class="pup-tear pup-tear-right" cx="92" cy="86" r="2.5" fill="#60a5fa" />
                                 </g>
 
                                 <!-- Hazardous Squinting Eyes (> <) -->

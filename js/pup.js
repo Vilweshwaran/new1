@@ -11,19 +11,21 @@ const AeraPup = (() => {
     let currentMood = 'good';
 
     /**
-     * Determines mood based on air quality, temperature, and humidity.
+     * Determines mood based ONLY on air quality value (4-tier system).
+     * The ESP's 2-tier "GOOD/POOR" status is ignored — we use our own thresholds.
+     *
      * Thresholds:
-     *   - Air < 300: GOOD (Happy and healthy!)
-     *   - Air 300 - 550: MODERATE (Smells okay...)
-     *   - Air 550 - 750 (or Temp > 33°C): POOR (*pant pant*)
-     *   - Air > 750 (or Temp > 38°C): HAZARDOUS (*cough cough*)
+     *   - Air < 300:       GOOD     (Happy and healthy!)  — happy ^_^ eyes, smile, bouncing
+     *   - Air 300 - 500:   MODERATE (Smells okay...)      — dot eyes, neutral mouth, gentle sway
+     *   - Air 500 - 700:   POOR     (Feeling sick...)     — sad crying eyes, frown, tears
+     *   - Air >= 700:      HAZARDOUS (*cough cough*)      — squinting X_X, cough, shaking
      */
-    function calculateMood(air, temp, humidity, status) {
+    function calculateMood(air, temp, humidity) {
         const airVal = Number(air);
         const tempVal = Number(temp);
 
-        // Hazardous: extremely high gas reading
-        if (airVal >= 750 || (status && String(status).toUpperCase() === 'HAZARDOUS')) {
+        // Hazardous: extremely high gas reading or extreme heat
+        if (airVal >= 700 || tempVal > 38) {
             return {
                 mood: 'hazardous',
                 text: '*cough cough*',
@@ -31,11 +33,11 @@ const AeraPup = (() => {
             };
         }
 
-        // Poor: high gas or very hot
-        if (airVal >= 550 || tempVal > 33 || (status && String(status).toUpperCase() === 'POOR')) {
+        // Poor: bad air or very hot — puppy is SAD/CRYING
+        if (airVal >= 500 || tempVal > 33) {
             return {
                 mood: 'poor',
-                text: '*pant pant*',
+                text: 'Feeling sick...',
                 colorClass: 'pup-poor'
             };
         }
@@ -49,7 +51,7 @@ const AeraPup = (() => {
             };
         }
 
-        // Good: clean air & pleasant temperature
+        // Good: clean air & pleasant temperature — puppy is HAPPY
         return {
             mood: 'good',
             text: 'Happy and healthy!',
@@ -63,9 +65,9 @@ const AeraPup = (() => {
         const air = data.air !== undefined ? data.air : 200;
         const temp = data.temperature !== undefined ? data.temperature : 25;
         const humidity = data.humidity !== undefined ? data.humidity : 50;
-        const status = data.status || 'GOOD';
 
-        const { mood, text, colorClass } = calculateMood(air, temp, humidity, status);
+        // We intentionally do NOT use data.status — only air/temp values
+        const { mood, text, colorClass } = calculateMood(air, temp, humidity);
 
         if (currentMood !== mood) {
             containerEl.classList.remove('pup-state-good', 'pup-state-moderate', 'pup-state-poor', 'pup-state-hazardous');

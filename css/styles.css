@@ -669,14 +669,33 @@ p { color: var(--text-muted); }
     75%      { transform: translateY(-3px) rotate(2deg); }
 }
 
-/* ── POOR: Heavy Panting Heave (chest rising and falling fast) ── */
+/* ── POOR: Sad Trembling / Whimpering (puppy is crying) ── */
 .pup-avatar-container.pup-state-poor .pup-svg {
-    animation: pupPantHeave 0.45s ease-in-out infinite;
+    animation: pupSadTremble 1.5s ease-in-out infinite;
 }
 
-@keyframes pupPantHeave {
-    0%, 100% { transform: scaleY(1) scaleX(1) translateY(0); }
-    50%      { transform: scaleY(0.94) scaleX(1.04) translateY(3px); }
+@keyframes pupSadTremble {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    15%      { transform: translateY(2px) rotate(-1.5deg); }
+    30%      { transform: translateY(0) rotate(0deg); }
+    45%      { transform: translateY(2px) rotate(1.5deg); }
+    60%      { transform: translateY(0) rotate(0deg); }
+    75%      { transform: translateY(2px) rotate(-1deg); }
+    90%      { transform: translateY(0) rotate(0deg); }
+}
+
+/* ── Tear Drop Falling Animation ── */
+.pup-tear {
+    animation: tearFall 1.2s ease-in infinite;
+}
+.pup-tear-right {
+    animation-delay: 0.6s;
+}
+
+@keyframes tearFall {
+    0%   { opacity: 0; transform: translateY(0) scale(0.6); }
+    20%  { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(18px) scale(0.3); }
 }
 
 /* ── HAZARDOUS: Violent Shaking / Coughing Shudder ── */
@@ -692,7 +711,7 @@ p { color: var(--text-muted); }
     100% { transform: translate(3px, -1px) rotate(2deg); }
 }
 
-/* ── Tongue Panting Animation (visible bounce) ── */
+/* ── Tongue Panting Animation (for hazardous cough open mouth) ── */
 .pup-tongue {
     transform-origin: 80px 101px;
     animation: tonguePant 0.35s ease-in-out infinite alternate;
@@ -734,9 +753,9 @@ p { color: var(--text-muted); }
 }
 
 /* ── State Visibility Rules ── */
-.eyes-happy, .eyes-moderate, .eyes-pant, .eyes-cough,
-.mouth-smile, .mouth-neutral, .mouth-pant, .mouth-cough,
-.pup-cough-lines, .pup-paws-resting, .pup-paws-raised {
+.eyes-happy, .eyes-moderate, .eyes-sad, .eyes-cough,
+.mouth-smile, .mouth-neutral, .mouth-sad, .mouth-cough,
+.pup-cough-lines, .pup-paws-resting, .pup-paws-raised, .pup-tear {
     display: none;
 }
 
@@ -754,9 +773,10 @@ p { color: var(--text-muted); }
     display: block;
 }
 
-/* Poor State */
-.pup-state-poor .eyes-pant,
-.pup-state-poor .mouth-pant,
+/* Poor State (Crying) */
+.pup-state-poor .eyes-sad,
+.pup-state-poor .mouth-sad,
+.pup-state-poor .pup-tear,
 .pup-state-poor .pup-paws-resting {
     display: block;
 }
