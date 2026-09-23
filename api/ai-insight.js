@@ -214,16 +214,24 @@ module.exports = async function handler(req, res) {
     try {
         if (groqKey) {
             // --- 1. Groq (Free, ultra-fast) ---
-            providerName = 'Groq (llama-3.1-8b)';
+            providerName = 'Groq (openai/gpt-oss-20b)';
             const { statusCode, body: rawBody } = await callOpenAICompatible(
                 'api.groq.com',
                 '/openai/v1/chat/completions',
                 groqKey,
-                process.env.GROQ_MODEL || 'llama-3.1-8b-instant',
+                process.env.GROQ_MODEL || 'openai/gpt-oss-20b',
                 messages
             );
             if (statusCode !== 200) {
-                return res.status(503).json({ error: `Groq API error (${statusCode}): ${rawBody}` });
+                let detail = `Status ${statusCode}`;
+                try {
+                    const parsed = JSON.parse(rawBody);
+                    if (parsed?.error?.message) detail = parsed.error.message;
+                    else detail = rawBody;
+                } catch (_) {
+                    detail = rawBody;
+                }
+                return res.status(503).json({ error: `Groq API error (${statusCode}): ${detail}` });
             }
             const data = JSON.parse(rawBody);
             rawContent = data?.choices?.[0]?.message?.content?.trim();
@@ -284,6 +292,7 @@ module.exports = async function handler(req, res) {
     let insight;
     try {
         const cleaned = rawContent
+            .replace(/<think>[\s\S]*?<\/think>/gi, '')
             .replace(/^```json\s*/i, '')
             .replace(/^```\s*/i, '')
             .replace(/```\s*$/, '')
