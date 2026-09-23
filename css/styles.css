@@ -605,57 +605,102 @@ p { color: var(--text-muted); }
 /* ── Tail Wagging Animation ── */
 .pup-tail {
     transform-origin: 115px 120px;
-    animation: pupWag 0.9s ease-in-out infinite alternate;
 }
 
-@keyframes pupWag {
-    0%   { transform: rotate(-8deg); }
-    100% { transform: rotate(18deg); }
+/* Happy: fast excited tail wag */
+.pup-state-good .pup-tail {
+    animation: pupWagFast 0.4s ease-in-out infinite alternate;
+}
+/* Moderate: slow gentle tail wag */
+.pup-state-moderate .pup-tail {
+    animation: pupWagSlow 1.2s ease-in-out infinite alternate;
+}
+/* Poor: very slow droopy wag */
+.pup-state-poor .pup-tail {
+    animation: pupWagSlow 2s ease-in-out infinite alternate;
+}
+/* Hazardous: tail still (scared) */
+.pup-state-hazardous .pup-tail {
+    animation: none;
+    transform: rotate(-5deg);
 }
 
-/* ── Gentle Breathing Animation (Good & Moderate) ── */
-.pup-avatar-container.pup-state-good .pup-svg,
+@keyframes pupWagFast {
+    0%   { transform: rotate(-15deg); }
+    100% { transform: rotate(25deg); }
+}
+@keyframes pupWagSlow {
+    0%   { transform: rotate(-5deg); }
+    100% { transform: rotate(10deg); }
+}
+
+/* ── HAPPY: Bouncy Excited Hop (whole body bounces up and down) ── */
+.pup-avatar-container.pup-state-good .pup-svg {
+    animation: pupHappyBounce 0.8s ease-in-out infinite;
+}
+
+@keyframes pupHappyBounce {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    25%      { transform: translateY(-10px) rotate(-3deg); }
+    50%      { transform: translateY(-2px) rotate(0deg); }
+    75%      { transform: translateY(-10px) rotate(3deg); }
+}
+
+/* ── HAPPY: Waving Paw Animation ── */
+.pup-state-good .pup-paws-resting {
+    animation: pupWavePaw 0.6s ease-in-out infinite alternate;
+    transform-origin: 116px 86px;
+}
+
+@keyframes pupWavePaw {
+    0%   { transform: rotate(-10deg); }
+    100% { transform: rotate(15deg); }
+}
+
+/* ── MODERATE: Gentle Idle Sway (looking around curiously) ── */
 .pup-avatar-container.pup-state-moderate .pup-svg {
-    animation: pupBreathe 3s ease-in-out infinite;
+    animation: pupIdleSway 3s ease-in-out infinite;
 }
 
-@keyframes pupBreathe {
-    0%, 100% { transform: translateY(0); }
-    50%      { transform: translateY(-4px); }
+@keyframes pupIdleSway {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    25%      { transform: translateY(-3px) rotate(-2deg); }
+    50%      { transform: translateY(0) rotate(0deg); }
+    75%      { transform: translateY(-3px) rotate(2deg); }
 }
 
-/* ── Panting Animation (Poor State) ── */
+/* ── POOR: Heavy Panting Heave (chest rising and falling fast) ── */
 .pup-avatar-container.pup-state-poor .pup-svg {
-    animation: pupPant 0.5s ease-in-out infinite alternate;
+    animation: pupPantHeave 0.45s ease-in-out infinite;
 }
 
-@keyframes pupPant {
-    0%   { transform: scale(1) translateY(0); }
-    100% { transform: scale(1.025, 0.975) translateY(2px); }
+@keyframes pupPantHeave {
+    0%, 100% { transform: scaleY(1) scaleX(1) translateY(0); }
+    50%      { transform: scaleY(0.94) scaleX(1.04) translateY(3px); }
 }
 
-/* ── Shivering / Coughing Vibration (Hazardous State) ── */
+/* ── HAZARDOUS: Violent Shaking / Coughing Shudder ── */
 .pup-avatar-container.pup-state-hazardous .pup-svg {
-    animation: pupCough 0.35s ease-in-out infinite;
+    animation: pupCoughShake 0.15s ease-in-out infinite;
 }
 
-@keyframes pupCough {
-    0%, 100% { transform: translate(0, 0) rotate(0deg); }
-    20%      { transform: translate(-2px, -3px) rotate(-1.5deg); }
-    40%      { transform: translate(3px, 1px) rotate(1.5deg); }
-    60%      { transform: translate(-3px, 2px) rotate(-1deg); }
-    80%      { transform: translate(2px, -2px) rotate(1deg); }
+@keyframes pupCoughShake {
+    0%   { transform: translate(0, 0) rotate(0deg); }
+    25%  { transform: translate(-4px, -2px) rotate(-3deg); }
+    50%  { transform: translate(4px, 2px) rotate(3deg); }
+    75%  { transform: translate(-3px, 1px) rotate(-2deg); }
+    100% { transform: translate(3px, -1px) rotate(2deg); }
 }
 
-/* ── Tongue Panting Animation ── */
+/* ── Tongue Panting Animation (visible bounce) ── */
 .pup-tongue {
     transform-origin: 80px 101px;
-    animation: tonguePant 0.5s ease-in-out infinite alternate;
+    animation: tonguePant 0.35s ease-in-out infinite alternate;
 }
 
 @keyframes tonguePant {
-    0%   { transform: scaleY(0.9); }
-    100% { transform: scaleY(1.2); }
+    0%   { transform: scaleY(0.8) translateY(0); }
+    100% { transform: scaleY(1.3) translateY(3px); }
 }
 
 /* ── Floppy Ears Sway ── */
